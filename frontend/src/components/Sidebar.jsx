@@ -1,4 +1,4 @@
-import { NavLink, useParams } from "react-router-dom";
+import { NavLink, useParams, Link } from "react-router-dom";
 import { LayoutGrid, BarChart3, Users, LogOut, Sun, Moon } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
@@ -15,15 +15,20 @@ export default function Sidebar() {
 
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col border-r border-line bg-panel px-4 py-6">
-      <div className="mb-8 flex items-center gap-2 px-2">
+      <Link to="/workspaces" className="mb-8 flex items-center gap-2 px-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-ink font-display text-sm font-semibold text-canvas">
           R
         </div>
         <span className="font-display text-lg font-semibold text-ink">Ridgeline</span>
-      </div>
+      </Link>
 
       {workspaceId ? (
         <nav className="flex flex-col gap-1">
+          <NavLink to="/workspaces" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-ink/60 transition-colors hover:bg-ink/5 hover:text-ink">
+            <LayoutGrid size={17} />
+            All workspaces
+          </NavLink>
+          <div className="my-2 border-t border-line" />
           <NavLink to={`/workspaces/${workspaceId}`} end className={linkClass}>
             <LayoutGrid size={17} />
             Boards
