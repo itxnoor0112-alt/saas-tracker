@@ -16,6 +16,18 @@ export async function getBoardOr404(boardId) {
   return board;
 }
 
+export async function updateBoard(board, { name, description }) {
+  board.name = name;
+  board.description = description;
+  await board.save();
+  return board;
+}
+
+export async function deleteBoardCascade(boardId) {
+  await Task.deleteMany({ board: boardId });
+  await Board.findByIdAndDelete(boardId);
+}
+
 export async function createTask(board, payload, createdBy) {
   return Task.create({
     board: board._id,

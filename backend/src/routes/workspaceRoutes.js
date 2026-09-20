@@ -4,9 +4,11 @@ import { loadWorkspace, requireWorkspaceAdmin } from "../middleware/workspaceAcc
 import { validate } from "../utils/validate.js";
 import {
   workspaceSchema,
+  updateWorkspaceSchema,
   inviteSchema,
   roleUpdateSchema,
   boardSchema,
+  boardUpdateSchema,
 } from "../utils/schemas.js";
 import * as workspaceController from "../controllers/workspaceController.js";
 import * as boardController from "../controllers/boardController.js";
@@ -21,6 +23,13 @@ router.post("/", validate(workspaceSchema), workspaceController.createWorkspace)
 router.get("/", workspaceController.listWorkspaces);
 
 router.get("/:workspaceId", loadWorkspace(), workspaceController.getWorkspace);
+router.patch(
+  "/:workspaceId",
+  loadWorkspace(),
+  requireWorkspaceAdmin,
+  validate(updateWorkspaceSchema),
+  workspaceController.updateWorkspace
+);
 router.delete(
   "/:workspaceId",
   loadWorkspace(),
@@ -44,6 +53,13 @@ router.patch(
   workspaceController.updateMemberRole
 );
 
+router.delete(
+  "/:workspaceId/members/:userId",
+  loadWorkspace(),
+  requireWorkspaceAdmin,
+  workspaceController.removeMember
+);
+
 router.post(
   "/:workspaceId/boards",
   loadWorkspace(),
@@ -52,6 +68,19 @@ router.post(
 );
 router.get("/:workspaceId/boards", loadWorkspace(), boardController.listBoards);
 router.get("/:workspaceId/boards/:boardId", loadWorkspace(), boardController.getBoard);
+router.patch(
+  "/:workspaceId/boards/:boardId",
+  loadWorkspace(),
+  requireWorkspaceAdmin,
+  validate(boardUpdateSchema),
+  boardController.updateBoard
+);
+router.delete(
+  "/:workspaceId/boards/:boardId",
+  loadWorkspace(),
+  requireWorkspaceAdmin,
+  boardController.deleteBoard
+);
 
 router.get("/:workspaceId/analytics", loadWorkspace(), analyticsController.getWorkspaceAnalytics);
 

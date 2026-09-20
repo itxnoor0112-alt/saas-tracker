@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Plus, ChevronLeft, Search } from "lucide-react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { Plus, ChevronLeft, Search, Pencil, Trash2 } from "lucide-react";
 import api from "../api/httpClient.js";
 import AppShell from "../components/AppShell.jsx";
 import TaskCard from "../components/TaskCard.jsx";
@@ -16,14 +16,21 @@ const columns = [
 
 export default function BoardView() {
   const { workspaceId, boardId } = useParams();
+  const navigate = useNavigate();
   const [board, setBoard] = useState(null);
+  const [role, setRole] = useState("member");
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const [searchInput, setSearchInput] = useState("");
   const [filters, setFilters] = useState({ search: "", priority: "" });
   const debounceRef = useRef(null);
+
+  const [editingBoard, setEditingBoard] = useState(false);
+  const [boardForm, setBoardForm] = useState({ name: "", description: "" });
+  const [boardError, setBoardError] = useState("");
 
   const loadBoardAndMembers = useCallback(async () => {
     const [boardRes, wsRes] = await Promise.all([
@@ -31,6 +38,7 @@ export default function BoardView() {
       api.get(`/workspaces/${workspaceId}`),
     ]);
     setBoard(boardRes.data.data.board);
+    setRole(wsRes.data.data.role);
     setMembers(wsRes.data.data.workspace.members);
   }, [workspaceId, boardId]);
 
@@ -73,6 +81,11 @@ export default function BoardView() {
     setTasks((prev) => [data.data.task, ...prev]);
   }
 
+  async function handleUpdateTask(payload) {
+    const { data } = await api.patch(`/workspaces/${workspaceId}/tasks/${editingTask._id}`, payload);
+    setTasks((prev) => prev.map((t) => (t._id === editingTask._id ? data.data.task : t)));
+  }
+
   async function handleStatusChange(taskId, status) {
     setTasks((prev) => prev.map((t) => (t._id === taskId ? { ...t, status } : t)));
     await api.patch(`/workspaces/${workspaceId}/tasks/${taskId}`, { status });
@@ -81,6 +94,37 @@ export default function BoardView() {
   async function handleDelete(taskId) {
     setTasks((prev) => prev.filter((t) => t._id !== taskId));
     await api.delete(`/workspaces/${workspaceId}/tasks/${taskId}`);
+  }
+
+  function startEditingBoard() {
+    setBoardForm({ name: board.name, description: board.description || "" });
+    setBoardError("");
+    setEditingBoard(true);
+  }
+
+  async function handleRenameBoard(e) {
+    e.preventDefault();
+    setBoardError("");
+    try {
+      const { data } = await api.patch(`/workspaces/${workspaceId}/boards/${boardId}`, boardForm);
+      setBoard(data.data.board);
+      setEditingBoard(false);
+    } catch (err) {
+      setBoardError(err.response?.data?.message || "Could not rename board");
+    }
+  }
+
+  async function handleDeleteBoard() {
+    const confirmed = window.confirm(
+      `Delete "${board.name}"? This removes all its tasks permanently.`
+    );
+    if (!confirmed) return;
+    try {
+      await api.delete(`/workspaces/${workspaceId}/boards/${boardId}`);
+      navigate(`/workspaces/${workspaceId}`);
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not delete board");
+    }
   }
 
   return (
@@ -94,16 +138,62 @@ export default function BoardView() {
           All boards
         </Link>
 
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="font-display text-2xl font-semibold text-ink">{board?.name}</h1>
-            <p className="text-sm text-ink/60">{board?.description || "No description"}</p>
+        {editingBoard ? (
+          <form onSubmit={handleRenameBoard} className="card mb-6 flex flex-col gap-3 p-5">
+            <input
+              required
+              value={boardForm.name}
+              onChange={(e) => setBoardForm({ ...boardForm, name: e.target.value })}
+              className="input-field"
+            />
+            <input
+              value={boardForm.description}
+              onChange={(e) => setBoardForm({ ...boardForm, description: e.target.value })}
+              placeholder="Description (optional)"
+              className="input-field"
+            />
+            {boardError ? <p className="text-xs text-rust">{boardError}</p> : null}
+            <div className="flex gap-2">
+              <button type="submit" className="btn-secondary">
+                Save
+              </button>
+              <button type="button" onClick={() => setEditingBoard(false)} className="btn-ghost">
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="font-display text-2xl font-semibold text-ink">{board?.name}</h1>
+              <p className="text-sm text-ink/60">{board?.description || "No description"}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {role === "admin" ? (
+                <>
+                  <button
+                    onClick={startEditingBoard}
+                    className="flex items-center gap-1 rounded-md px-3 py-2 text-sm text-ink/60 hover:bg-ink/5 hover:text-ink"
+                  >
+                    <Pencil size={15} />
+                    Rename
+                  </button>
+                  <button
+                    onClick={handleDeleteBoard}
+                    className="flex items-center gap-1 rounded-md px-3 py-2 text-sm text-ink/60 hover:bg-rust-light hover:text-rust"
+                  >
+                    <Trash2 size={15} />
+                    Delete
+                  </button>
+                </>
+              ) : null}
+              <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
+                <Plus size={16} />
+                New task
+              </button>
+            </div>
           </div>
-          <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
-            <Plus size={16} />
-            New task
-          </button>
-        </div>
+        )}
 
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <div className="relative w-full max-w-xs">
@@ -146,6 +236,7 @@ export default function BoardView() {
                       task={task}
                       onStatusChange={handleStatusChange}
                       onDelete={handleDelete}
+                      onEdit={setEditingTask}
                     />
                   ))}
                   {columnTasks[col.key].length === 0 ? (
@@ -163,6 +254,15 @@ export default function BoardView() {
           members={members}
           onClose={() => setShowModal(false)}
           onSubmit={handleCreateTask}
+        />
+      ) : null}
+
+      {editingTask ? (
+        <TaskFormModal
+          members={members}
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onSubmit={handleUpdateTask}
         />
       ) : null}
     </AppShell>

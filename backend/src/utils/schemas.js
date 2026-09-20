@@ -55,3 +55,13 @@ export const taskQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
 });
+
+export const updateWorkspaceSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  description: z.string().trim().max(300).optional().default(""),
+});
+
+export const boardUpdateSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  description: z.string().trim().max(300).optional().default(""),
+});

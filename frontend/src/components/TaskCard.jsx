@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import PriorityBadge from "./PriorityBadge.jsx";
 
 const statusOrder = ["todo", "in-progress", "review", "done"];
@@ -9,18 +9,32 @@ const statusLabels = {
   done: "Done",
 };
 
-export default function TaskCard({ task, onStatusChange, onDelete }) {
+export default function TaskCard({ task, onStatusChange, onDelete, onEdit }) {
+  function handleDeleteClick() {
+    const confirmed = window.confirm(`Delete "${task.title}"? This cannot be undone.`);
+    if (confirmed) onDelete(task._id);
+  }
+
   return (
     <div className="card p-3 shadow-sm">
       <div className="mb-2 flex items-start justify-between gap-2">
         <p className="text-sm font-medium leading-snug text-ink">{task.title}</p>
-        <button
-          onClick={() => onDelete(task._id)}
-          className="shrink-0 text-ink/30 transition-colors hover:text-rust"
-          aria-label="Delete task"
-        >
-          <Trash2 size={15} />
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            onClick={() => onEdit(task)}
+            className="text-ink/30 transition-colors hover:text-teal-dark"
+            aria-label="Edit task"
+          >
+            <Pencil size={14} />
+          </button>
+          <button
+            onClick={handleDeleteClick}
+            className="text-ink/30 transition-colors hover:text-rust"
+            aria-label="Delete task"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
       </div>
 
       {task.description ? (

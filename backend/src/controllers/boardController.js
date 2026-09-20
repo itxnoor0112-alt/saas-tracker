@@ -25,3 +25,21 @@ export const getBoard = asyncHandler(async (req, res) => {
   }
   sendSuccess(res, 200, "Board fetched", { board });
 });
+
+export const updateBoard = asyncHandler(async (req, res) => {
+  const board = await taskService.getBoardOr404(req.params.boardId);
+  if (board.workspace.toString() !== req.workspace._id.toString()) {
+    throw new ApiError(404, "Board not found in this workspace");
+  }
+  const updated = await taskService.updateBoard(board, req.body);
+  sendSuccess(res, 200, "Board updated", { board: updated });
+});
+
+export const deleteBoard = asyncHandler(async (req, res) => {
+  const board = await taskService.getBoardOr404(req.params.boardId);
+  if (board.workspace.toString() !== req.workspace._id.toString()) {
+    throw new ApiError(404, "Board not found in this workspace");
+  }
+  await taskService.deleteBoardCascade(board._id);
+  sendSuccess(res, 200, "Board deleted", null);
+});

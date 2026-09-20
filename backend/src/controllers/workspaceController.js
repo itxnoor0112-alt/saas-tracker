@@ -40,6 +40,16 @@ export const updateMemberRole = asyncHandler(async (req, res) => {
   sendSuccess(res, 200, "Member role updated", { workspace });
 });
 
+export const updateWorkspace = asyncHandler(async (req, res) => {
+  const workspace = await workspaceService.updateWorkspaceDetails(req.workspace, req.body);
+  sendSuccess(res, 200, "Workspace updated", { workspace });
+});
+
+export const removeMember = asyncHandler(async (req, res) => {
+  const workspace = await workspaceService.removeMember(req.workspace, req.params.userId);
+  sendSuccess(res, 200, "Member removed", { workspace });
+});
+
 export const deleteWorkspace = asyncHandler(async (req, res) => {
   await workspaceService.deleteWorkspaceCascade(req.workspace._id);
   sendSuccess(res, 200, "Workspace deleted", null);

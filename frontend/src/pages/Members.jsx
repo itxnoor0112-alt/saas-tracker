@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { UserPlus, Shield } from "lucide-react";
+import { UserPlus, Shield, UserMinus } from "lucide-react";
 import api from "../api/httpClient.js";
 import AppShell from "../components/AppShell.jsx";
 import { ListSkeleton } from "../components/Skeletons.jsx";
@@ -45,6 +45,17 @@ export default function Members() {
   async function handleRoleChange(memberId, newRole) {
     await api.patch(`/workspaces/${workspaceId}/members/${memberId}`, { role: newRole });
     load();
+  }
+
+  async function handleRemove(member) {
+    const confirmed = window.confirm(`Remove ${member.user.name} from this workspace?`);
+    if (!confirmed) return;
+    try {
+      await api.delete(`/workspaces/${workspaceId}/members/${member.user._id}`);
+      load();
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not remove member");
+    }
   }
 
   return (
@@ -95,14 +106,23 @@ export default function Members() {
                 </div>
 
                 {role === "admin" && m.user._id !== user.id ? (
-                  <select
-                    value={m.role}
-                    onChange={(e) => handleRoleChange(m.user._id, e.target.value)}
-                    className="rounded-md border border-line bg-panel px-2 py-1 text-xs font-medium text-ink outline-none focus-visible:border-teal"
-                  >
-                    <option value="member">Member</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={m.role}
+                      onChange={(e) => handleRoleChange(m.user._id, e.target.value)}
+                      className="rounded-md border border-line bg-panel px-2 py-1 text-xs font-medium text-ink outline-none focus-visible:border-teal"
+                    >
+                      <option value="member">Member</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <button
+                      onClick={() => handleRemove(m)}
+                      className="text-ink/30 transition-colors hover:text-rust"
+                      aria-label="Remove member"
+                    >
+                      <UserMinus size={16} />
+                    </button>
+                  </div>
                 ) : (
                   <span className="flex items-center gap-1 text-xs font-medium text-ink/50">
                     {m.role === "admin" ? <Shield size={13} /> : null}

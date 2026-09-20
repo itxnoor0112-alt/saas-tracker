@@ -55,6 +55,30 @@ export async function updateMemberRole(workspace, targetUserId, role) {
   return workspace;
 }
 
+export async function updateWorkspaceDetails(workspace, { name, description }) {
+  workspace.name = name;
+  workspace.description = description;
+  await workspace.save();
+  return workspace;
+}
+
+export async function removeMember(workspace, targetUserId) {
+  const entry = workspace.members.find(
+    (m) => m.user.toString() === targetUserId
+  );
+  if (!entry) {
+    throw new ApiError(404, "Member not found in this workspace");
+  }
+  if (workspace.owner.toString() === targetUserId) {
+    throw new ApiError(400, "The workspace owner cannot be removed");
+  }
+  workspace.members = workspace.members.filter(
+    (m) => m.user.toString() !== targetUserId
+  );
+  await workspace.save();
+  return workspace;
+}
+
 export async function deleteWorkspaceCascade(workspaceId) {
   const boards = await Board.find({ workspace: workspaceId }).select("_id");
   const boardIds = boards.map((b) => b._id);
