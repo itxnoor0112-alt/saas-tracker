@@ -19,24 +19,41 @@ access control (RBAC).
 ## Project structure
 
 saas-tracker/
+  
   backend/
+  
     server.js
+  
     src/
+  
       config/        MongoDB connection
-      models/         Mongoose schemas (User, Workspace, Board, Task)
+  
+      models/         Mongoose schemas (User, Workspace, Board, 
+      Task)
+      
       middleware/     auth, RBAC, error handling, rate limiting
+      
       controllers/     thin HTTP layer
+      
       services/       business logic (controller-service architecture)
+      
       routes/         Express routers
+      
       utils/          ApiError, asyncHandler, Zod schemas, query validation
+  
   frontend/
+  
     src/
+  
       api/            Custom fetch-based HTTP client (retry + cache + auto
                        token refresh — see "Custom HTTP client" below)
+  
       context/        AuthContext (login/register/logout), ThemeContext
                        (light/dark mode)
+  
       components/     Sidebar, TaskCard, TaskFormModal, ErrorBoundary,
                        Skeletons, etc.
+  
       pages/          Login, Register, Workspaces, Board, Analytics, Members
 
 
